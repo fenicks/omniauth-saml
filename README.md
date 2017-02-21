@@ -185,15 +185,19 @@ class SessionsController < Devise::SessionsController
   def destroy
     # Preserve the saml_uid in the session
     saml_uid = session["saml_uid"]
+    # Preserver saml_slo_sessionindex for SLO request
+    saml_slo_sessionindex = session['saml_slo_sessionindex']
     super do
       session["saml_uid"] = saml_uid
+      session['saml_slo_sessionindex'] = saml_slo_sessionindex
     end
   end
 
   # ...
 
   def after_sign_out_path_for(_)
-    if session['saml_uid'] && SAML_SETTINGS.idp_slo_target_url
+    saml_settings = Devise.omniauth_configs[:saml].options[:idp_slo_target_url] || nil
+    if session['saml_uid'] && saml_settings
       user_saml_omniauth_authorize_path + "/spslo"
     else
       super

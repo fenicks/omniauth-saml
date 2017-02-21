@@ -180,6 +180,9 @@ module OmniAuth
         response.attributes["fingerprint"] = options.idp_cert_fingerprint
         response.soft = false
 
+        # Store SessionIndex for SLO request
+        session["saml_slo_sessionindex"] = response.sessionindex
+
         response.is_valid?
         @name_id = response.name_id
         @attributes = response.attributes
@@ -220,6 +223,7 @@ module OmniAuth
 
         session.delete("saml_uid")
         session.delete("saml_transaction_id")
+        session.delete("saml_slo_sessionindex")
 
         redirect(slo_relay_state)
       end
@@ -253,6 +257,9 @@ module OmniAuth
         if settings.name_identifier_value.nil?
           settings.name_identifier_value = session["saml_uid"]
         end
+
+        # Add SessionIndex to the SLO request
+        settings.sessionindex = session["saml_slo_sessionindex"] unless settings.sessionindex
 
         logout_request.create(settings, RelayState: slo_relay_state)
       end
